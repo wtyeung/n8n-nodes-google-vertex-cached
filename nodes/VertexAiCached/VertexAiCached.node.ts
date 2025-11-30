@@ -108,7 +108,7 @@ export class VertexAiCached implements INodeType {
 						displayName: 'Sampling Temperature',
 						name: 'temperature',
 						type: 'number',
-						default: 0.2,
+						default: 0.9,
 						typeOptions: {
 							minValue: 0,
 							maxValue: 2,
@@ -271,6 +271,13 @@ export class VertexAiCached implements INodeType {
 		const options = this.getNodeParameter('options', itemIndex, {}) as any;
 		const location = options.location || 'us-central1';
 
+		// Apply defaults if not set in options (matching UI defaults)
+		// This is crucial because getNodeParameter for collections only returns explicitly set values
+		const temperature = options.temperature !== undefined ? options.temperature : 0.9;
+		const topP = options.topP !== undefined ? options.topP : 0.95;
+		const topK = options.topK !== undefined ? options.topK : 40;
+		const maxOutputTokens = options.maxOutputTokens || 8192;
+
 		// Parse the service account credentials
 		const serviceAccountEmail = credentials.email as string;
 		const privateKey = (credentials.privateKey as string).replace(/\\n/g, '\n');
@@ -284,15 +291,29 @@ export class VertexAiCached implements INodeType {
 			},
 		};
 
-		// Base configuration - ALWAYS include all parameters like the working LangChain code
-		// The cache will override these at runtime, but they need to be in the base config
+		// Base configuration - ALWAYS include all parameters
 		const baseConfig: any = {
 			model: modelName,
 			project: projectIdValue,
 			location: location,
-			maxOutputTokens: 8192, // Always include, matching working code
+			maxOutputTokens,
+			temperature,
+			topP,
+			topK,
 			authOptions,
 		};
+
+		// Add optional parameters if they exist
+
+		// Add optional parameters if they exist
+		if (options.thinkingBudget !== undefined) {
+			// @ts-ignore - New parameter might not be in types yet
+			baseConfig.thinkingBudget = options.thinkingBudget;
+		}
+		
+		if (options.safetySettings) {
+			baseConfig.safetySettings = options.safetySettings.values;
+		}
 
 		// Instantiate the base model
 		const model = new ChatVertexAI(baseConfig);
@@ -300,9 +321,7 @@ export class VertexAiCached implements INodeType {
 		// THE BIND FIX: Critical for n8n Agent compatibility
 		if (cachedContentName && cachedContentName.trim() !== '') {
 			// Step 1: Create "Bound" Model
-			// This is the native LangChain way to attach parameters.
-			// It returns a "RunnableBinding" object.
-			// cachedContent is valid at runtime but not in type definitions, so we cast to any
+			// We use RunnableBinding because model.bind() is missing at runtime
 			const boundModel = new RunnableBinding({
 				bound: model,
 				kwargs: {
@@ -323,17 +342,25 @@ export class VertexAiCached implements INodeType {
 			
 			// @ts-ignore
 			boundModel.bindTools = function (tools: any, options?: any) {
-				// Step A: Bind tools to the ORIGINAL model (not the bound one)
+				// Step A: Bind tools to the ORIGINAL model
 				const modelWithTools = model.bindTools(tools, options);
 				
-				// Step B: Re-apply the Cache ID
-				// We wrap the result in another bind() to ensure cache stays attached
+				// Step B: Flatten the binding
+				// Extract the underlying model and the tool arguments
+				const bound = (modelWithTools as any).bound || modelWithTools;
+				const toolKwargs = (modelWithTools as any).kwargs || {};
+				
+				// Merge tools kwargs with cache kwargs
+				const combinedKwargs = {
+					...toolKwargs,
+					cachedContent: cachedContentName,
+				};
+				
+				// Create a SINGLE RunnableBinding with everything
 				const finalModel = new RunnableBinding({
-					bound: modelWithTools,
-					kwargs: {
-						cachedContent: cachedContentName,
-					},
-					config: {},
+					bound: bound,
+					kwargs: combinedKwargs,
+					config: (modelWithTools as any).config || {},
 				});
 				
 				return finalModel;

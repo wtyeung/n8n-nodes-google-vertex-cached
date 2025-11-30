@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-google-vertex-cached",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "n8n node for Google Vertex AI Chat with Context Caching support",
   "license": "MIT",
   "homepage": "https://github.com/timyeung/n8n-nodes-google-vertex-cached",
@@ -42,9 +42,9 @@
   },
   "dependencies": {
     "@google-cloud/resource-manager": "^5.3.0",
-    "@langchain/core": "^1.1.0",
-    "@langchain/google-vertexai": "^1.0.4",
-    "langchain": "^1.1.1"
+    "@langchain/core": "0.3.68",
+    "@langchain/google-vertexai": "0.2.18",
+    "langchain": "^0.3.6"
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
@@ -56,5 +56,8 @@
   "peerDependencies": {
     "n8n-core": "*",
     "n8n-workflow": "*"
+  },
+  "overrides": {
+    "@langchain/core": "0.3.68"
   }
 }

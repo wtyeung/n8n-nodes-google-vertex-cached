@@ -234,19 +234,13 @@ When the AI Agent runs, the request flows through multiple layers:
 
 ## Version History
 
-### 0.1.2 (Latest)
+### 0.2.0 (Stable Release)
 
-- Bump version to ensure clean installation for users encountering module loading errors.
+- **Major Stability Fix**: Downgraded internal dependencies to align with n8n's core (`@langchain/core` 0.3.x), resolving "Unsupported message type" and "SystemMessage.isInstance" errors.
+- **Critical Fix**: Fixed parameter passing (Temperature, TopP, etc.) so the model respects user settings and doesn't get stuck in cached personas.
+- **Improved Defaults**: Default temperature increased to 0.9 for better responsiveness.
+- **Robust Binding**: Implemented "Flattened Binding" strategy for tools + cache to ensure reliability.
 
-### 0.1.1
+### 0.1.0 - 0.1.3 (Beta)
 
-- Upgraded to `@langchain/google-vertexai` v1.0.4+ for better stability
-- Fixed cache parameter binding using `RunnableBinding`
-- Improved tool compatibility logic
-- Aligned credential handling with n8n standards
-
-### 0.1.0 (Initial Release)
-
-- Google Vertex AI Chat integration with Context Caching support
-- Full n8n AI Agent compatibility with tool binding
-- Support for Gemini models (1.5 Flash, 1.5 Pro, etc.)
+- Initial development and binding fixes.
