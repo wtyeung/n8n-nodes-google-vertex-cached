@@ -19,7 +19,7 @@
     },
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached.git"
     },
    "scripts": {
 		"build": "n8n-node build",
