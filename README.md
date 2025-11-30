@@ -70,6 +70,100 @@ This node uses n8n's built-in **Google Vertex AI OAuth2** credential (`googleVer
 - The node automatically handles the "bind fix" to ensure compatibility with n8n's AI Agent tool calling
 - Cached content has an expiration time - check your cache status in GCP Console
 
+## Technical Deep Dive: How Cache + Tools Work Together
+
+This node solves a tricky technical challenge: **using Context Caching while maintaining full n8n AI Agent tool support**. Here's how it works:
+
+### The Problem
+
+In LangChain, non-standard parameters like `cachedContent` must be passed via `.bind()`:
+
+```javascript
+model.bind({ cachedContent: 'projects/.../cachedContents/...' })
+```
+
+However, `.bind()` creates a generic `RunnableBinding` wrapper that **strips away specialized methods**:
+- ❌ Lost: `bindTools` (required by n8n AI Agent)
+- ❌ Lost: `withStructuredOutput`
+- ❌ Lost: Model-specific identity
+
+When n8n's AI Agent checks for tool support, it fails because the wrapper doesn't have `bindTools`.
+
+### The Solution: Smart Wrapper Pattern
+
+This node uses a **hybrid approach** that satisfies both LangChain's API and n8n's requirements:
+
+#### Step 1: Create the Cache Wrapper
+```javascript
+const boundModel = model.bind({ cachedContent: cacheId });
+```
+✅ Cache works  
+❌ Tools broken
+
+#### Step 2: Restore `bindTools` Method
+```javascript
+boundModel.bindTools = function(tools, options) {
+  // Delegate tool formatting to the original model
+  const modelWithTools = model.bindTools(tools, options);
+  
+  // Re-apply the cache to the tool-enabled model
+  return modelWithTools.bind({ cachedContent: cacheId });
+};
+```
+✅ Cache works  
+✅ Tools work
+
+#### Step 3: Restore Other Methods
+```javascript
+boundModel.lc_namespace = model.lc_namespace;
+boundModel.withStructuredOutput = model.withStructuredOutput?.bind(model);
+```
+
+### The Object Chain
+
+When the AI Agent runs, the request flows through multiple layers:
+
+```
+┌─────────────────────────────────────┐
+│ 1. n8n AI Agent                     │
+│    Calls: boundModel.bindTools()    │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│ 2. Restored bindTools Method        │
+│    Formats tools for Gemini         │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│ 3. Cache Binding Layer              │
+│    Injects cachedContent parameter  │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│ 4. ChatVertexAI Core                │
+│    Sends request to Vertex AI       │
+└─────────────────────────────────────┘
+```
+
+### Why This Works
+
+**Previous approaches failed:**
+- **Monkey Patching**: Tried to hack internal methods (`_generate`, `invoke`), but n8n calls different methods at different times
+- **Subclassing**: Created inheritance issues with LangChain's type system
+
+**This solution succeeds:**
+- ✅ Uses official LangChain `.bind()` API for cache injection
+- ✅ Manually restores required methods to satisfy n8n's checks
+- ✅ Maintains full compatibility with both systems
+- ✅ No internal method hacking required
+
+### Benefits
+
+1. **Cost Reduction**: Cache large contexts once, reuse across multiple calls
+2. **Lower Latency**: Cached content doesn't need to be reprocessed
+3. **Full Agent Support**: Works seamlessly with n8n's AI Agent tools
+4. **Future-Proof**: Uses official APIs, not internal hacks
+
 ## Compatibility
 
 - **Minimum n8n version**: 1.0.0
