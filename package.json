@@ -1,59 +1,49 @@
 {
-    "name": "n8n-nodes-google-vertex-cached",
-    "version": "0.1.0",
-    "description": "n8n node for Google Vertex AI Chat with Context Caching support",
-    "license": "MIT",
-    "homepage": "https://github.com/timyeung/n8n-nodes-google-vertex-cached",
-    "keywords": [
-        "n8n-community-node-package",
-        "n8n",
-        "vertex-ai",
-        "google",
-        "ai",
-        "langchain",
-        "context-caching"
-    ],
-    "author": {
-        "name": "Tim Yeung",
-        "email": "tim.yeung@hku.hk"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached.git"
-    },
-   "scripts": {
-		"build": "n8n-node build",
-		"build:watch": "tsc --watch",
-		"dev": "n8n-node dev",
-		"lint": "n8n-node lint",
-		"lint:fix": "n8n-node lint --fix",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
-	},
-    "files": [
-        "dist"
-    ],
-    "n8n": {
-        "n8nNodesApiVersion": 1,
-        "credentials": [],
-        "nodes": [
-            "dist/nodes/VertexAiCached/VertexAiCached.node.js"
-        ]
-    },
-    "dependencies": {
-        "@google-cloud/resource-manager": "^5.3.0",
-        "@langchain/google-vertexai": "^0.0.18",
-        "langchain": "^0.1.0"
-    },
-    "devDependencies": {
-        "@n8n/node-cli": "*",
-        "eslint": "9.32.0",
-        "prettier": "3.6.2",
-        "release-it": "^19.0.4",
-        "typescript": "5.9.2"
-    },
-    "peerDependencies": {
-        "n8n-workflow": "*",
-        "n8n-core": "*"
-    }
+  "name": "n8n-nodes-google-vertex-cached",
+  "version": "0.1.0",
+  "description": "n8n node for Google Vertex AI Chat with Context Caching support",
+  "license": "MIT",
+  "homepage": "https://github.com/timyeung/n8n-nodes-google-vertex-cached",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "vertex-ai",
+    "google",
+    "ai",
+    "langchain",
+    "context-caching"
+  ],
+  "author": { "name": "Tim Yeung", "email": "tim.yeung@hku.hk" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached.git"
+  },
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release"
+  },
+  "files": ["dist"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [],
+    "nodes": ["dist/nodes/VertexAiCached/VertexAiCached.node.js"],
+    "strict": false
+  },
+  "dependencies": {
+    "@google-cloud/resource-manager": "^5.3.0",
+    "@langchain/google-vertexai": "^0.0.18",
+    "langchain": "^0.1.0"
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "*",
+    "eslint": "9.32.0",
+    "prettier": "3.6.2",
+    "release-it": "^19.0.4",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": { "n8n-workflow": "*", "n8n-core": "*" }
 }
