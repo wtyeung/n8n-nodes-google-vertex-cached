@@ -272,9 +272,13 @@ To use **both** Context Caching and Dynamic Tools (like Calculator, Web Search, 
 
 ## Version History
 
-### 0.2.1 (Latest)
+### 0.2.3 (Latest)
 
-- Documentation updates to reflect correct technical implementation and dependency versions.
+- **Developer Experience**: Added a helpful error message when attempting to use Tools + Cache. The error now includes the **JSON Tool Schema**, allowing users to copy it and use it for creating a cache with baked-in tools.
+
+### 0.2.2
+
+- Documented the "Agent as a Tool" architecture workaround.
 
 ### 0.2.0 (Stable Release)
 

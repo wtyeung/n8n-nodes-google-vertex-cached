@@ -345,25 +345,29 @@ export class VertexAiCached implements INodeType {
 				// Step A: Bind tools to the ORIGINAL model
 				const modelWithTools = model.bindTools(tools, options);
 				
-				// Step B: Flatten the binding
-				// Extract the underlying model and the tool arguments
-				const bound = (modelWithTools as any).bound || modelWithTools;
+				// Check for Cache + Tools conflict
+				// If we have a cache AND tools are being bound, the Vertex AI API will reject the request.
+				// We intercept this here to provide a helpful error with the tool schema.
 				const toolKwargs = (modelWithTools as any).kwargs || {};
+				const toolsList = toolKwargs.tools || [];
 				
-				// Merge tools kwargs with cache kwargs
-				const combinedKwargs = {
-					...toolKwargs,
+				if (toolsList.length > 0 && cachedContentName) {
+					const toolConfigJson = JSON.stringify(toolsList, null, 2);
+					throw new Error(
+						`❌ CONFLICT: You cannot use dynamic tools with an existing Context Cache.\n\n` +
+						`To use these tools, you must bake them into the cache at creation time.\n` +
+						`Here is the JSON configuration for your tools:\n\n${toolConfigJson}\n\n` +
+						`Use this JSON in the 'tools' field when creating your cached content.`
+					);
+				}
+				
+				// Step B: Re-apply the Cache ID using standard .bind()
+				// Since we fixed the dependency versions, this standard chaining should work
+				// and is safer than manual RunnableBinding construction for tools.
+				// @ts-ignore
+				return modelWithTools.bind({
 					cachedContent: cachedContentName,
-				};
-				
-				// Create a SINGLE RunnableBinding with everything
-				const finalModel = new RunnableBinding({
-					bound: bound,
-					kwargs: combinedKwargs,
-					config: (modelWithTools as any).config || {},
 				});
-				
-				return finalModel;
 			};
 
 			// Step 3: Restore other properties n8n might check
