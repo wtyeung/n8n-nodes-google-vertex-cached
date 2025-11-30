@@ -18,6 +18,47 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 npm install n8n-nodes-google-vertex-cached
 ```
 
+## Development
+
+### Prerequisites
+
+- Node.js (>= 18)
+- npm
+- n8n installed globally or locally for testing
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/wtyeung/n8n-nodes-google-vertex-cached.git
+   cd n8n-nodes-google-vertex-cached
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Build the node:
+   ```bash
+   npm run build
+   ```
+
+### Testing Locally
+
+To test this node in your local n8n instance:
+
+1. Link the package:
+   ```bash
+   npm link
+   ```
+2. Go to your n8n nodes directory (usually `~/.n8n/custom`) and link it:
+   ```bash
+   npm link n8n-nodes-google-vertex-cached
+   ```
+   *Alternatively, use the built-in dev server:*
+   ```bash
+   npm run dev
+   ```
+
 ## Operations
 
 This node provides a **Chat Model** that can be used as a sub-node in n8n's AI Agent workflows:
@@ -193,7 +234,11 @@ When the AI Agent runs, the request flows through multiple layers:
 
 ## Version History
 
-### 0.1.1 (Latest)
+### 0.1.2 (Latest)
+
+- Bump version to ensure clean installation for users encountering module loading errors.
+
+### 0.1.1
 
 - Upgraded to `@langchain/google-vertexai` v1.0.4+ for better stability
 - Fixed cache parameter binding using `RunnableBinding`
