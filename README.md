@@ -235,6 +235,34 @@ When the AI Agent runs, the request flows through multiple layers:
 - **@langchain/google-vertexai**: ^0.2.18
 - **@langchain/core**: ^0.3.68
 
+## Known Limitations
+
+### Tools + Context Caching
+Due to current Vertex AI API restrictions, **you cannot use dynamic tools (n8n AI Agent Tools) alongside a Context Cache**.
+The API returns an error: `"Tool config, tools and system instruction should not be set in the request when using cached content."`
+
+If you need to use tools with cached content, the tools must be defined **at the time of cache creation**, which is not currently supported by this node's dynamic tool binding.
+
+**Workaround:** Use the node for Chat (RAG/QA) with Cache, but handle Tool Calling in a separate non-cached step or agent if needed.
+
+### Recommended Architecture: Agent as a Tool
+
+To use **both** Context Caching and Dynamic Tools (like Calculator, Web Search, etc.) in the same workflow, use the **"Agent as a Tool"** pattern:
+
+1.  **Main AI Agent**:
+    - Connect your dynamic tools here (e.g., "Date & Time").
+    - Use a standard Chat Model (non-cached).
+2.  **Sub-Agent (The "Secretary")**:
+    - Create a second AI Agent node.
+    - Connect the **Google Vertex AI Chat (Cached)** model to this agent.
+    - **Do not connect any tools** to this sub-agent.
+    - Configure this agent's system prompt to answer questions based on the cache.
+3.  **Connect**:
+    - Connect the Sub-Agent to the Main Agent's **"Tool"** input.
+    - Describe the tool as "A meeting secretary that has access to the full meeting transcripts and notes."
+
+**Result**: The Main Agent can look up the time using its own tool, then ask the "Secretary" tool to retrieve information from the large cached context. This bypasses the API limitation because the Cached Model never sees the dynamic tools.
+
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
