@@ -244,6 +244,10 @@ When the AI Agent runs, the request flows through multiple layers:
 
 ## Version History
 
+### 0.2.1 (Latest)
+
+- Documentation updates to reflect correct technical implementation and dependency versions.
+
 ### 0.2.0 (Stable Release)
 
 - **Major Stability Fix**: Downgraded internal dependencies to align with n8n's core (`@langchain/core` 0.3.x), resolving "Unsupported message type" and "SystemMessage.isInstance" errors.
