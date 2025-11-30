@@ -28,22 +28,22 @@ This node provides a **Chat Model** that can be used as a sub-node in n8n's AI A
 
 ## Credentials
 
-This node uses n8n's built-in **Google Vertex AI OAuth2** credential (`googleVertexAiOAuth2Api`).
+This node uses n8n's built-in **Google Service Account** credential (`googleApi`). This is the same credential used by the standard Google Vertex AI Chat Model node.
 
 ### Prerequisites
 
 1. A Google Cloud Platform account
 2. Vertex AI API enabled in your GCP project
-3. Service account with Vertex AI permissions
+3. Service account with Vertex AI permissions (e.g. `Vertex AI User`)
 
 ### Setup
 
 1. In n8n, go to **Credentials** → **New**
-2. Search for "Google Vertex AI OAuth2 API"
+2. Search for **"Google Service Account"**
 3. Provide:
-   - **Project ID**: Your GCP project ID
    - **Service Account Email**: Your service account email
-   - **Private Key**: Your service account private key (JSON format)
+   - **Private Key**: Your service account private key (from JSON key file)
+   - **Project ID**: Your GCP project ID (optional, can be auto-detected)
 
 ## Usage
 
@@ -192,6 +192,13 @@ When the AI Agent runs, the request flows through multiple layers:
 * [LangChain Google Vertex AI](https://js.langchain.com/docs/integrations/chat/google_vertex_ai)
 
 ## Version History
+
+### 0.1.1 (Latest)
+
+- Upgraded to `@langchain/google-vertexai` v1.0.4+ for better stability
+- Fixed cache parameter binding using `RunnableBinding`
+- Improved tool compatibility logic
+- Aligned credential handling with n8n standards
 
 ### 0.1.0 (Initial Release)
 
