@@ -9,8 +9,11 @@ import {
 } from 'n8n-workflow';
 import { ChatVertexAI } from '@langchain/google-vertexai';
 import { ProjectsClient } from '@google-cloud/resource-manager';
+import { RunnableBinding } from '@langchain/core/runnables';
 
 export class VertexAiCached implements INodeType {
+	usableAsTool = true;
+	
 	description: INodeTypeDescription = {
 		displayName: 'Google Vertex AI Chat (Cached)',
 		name: 'vertexAiCachedChat',
@@ -281,72 +284,59 @@ export class VertexAiCached implements INodeType {
 			},
 		};
 
-		// Base configuration
+		// Base configuration - ALWAYS include all parameters like the working LangChain code
+		// The cache will override these at runtime, but they need to be in the base config
 		const baseConfig: any = {
 			model: modelName,
 			project: projectIdValue,
 			location: location,
+			maxOutputTokens: 8192, // Always include, matching working code
 			authOptions,
 		};
-
-		// Critical: Only add generation parameters if NO cache is being used
-		// The cache already has these settings baked in and will reject conflicting configs
-		if (!cachedContentName || cachedContentName.trim() === '') {
-			const temperature = options.temperature !== undefined ? options.temperature : 0.2;
-			const maxOutputTokens = options.maxOutputTokens !== undefined ? options.maxOutputTokens : 8192;
-			const topP = options.topP !== undefined ? options.topP : 0.95;
-			const topK = options.topK !== undefined ? options.topK : 40;
-
-			baseConfig.temperature = temperature;
-			baseConfig.maxOutputTokens = maxOutputTokens;
-			baseConfig.topP = topP;
-			baseConfig.topK = topK;
-		}
-
-		// Add thinking budget if specified
-		if (options.thinkingBudget !== undefined) {
-			baseConfig.thinkingBudget = options.thinkingBudget;
-		}
-
-		// Add safety settings if specified
-		if (options.safetySettings?.values && options.safetySettings.values.length > 0) {
-			baseConfig.safetySettings = options.safetySettings.values.map((setting: any) => ({
-				category: setting.category,
-				threshold: setting.threshold,
-			}));
-		}
 
 		// Instantiate the base model
 		const model = new ChatVertexAI(baseConfig);
 
 		// THE BIND FIX: Critical for n8n Agent compatibility
 		if (cachedContentName && cachedContentName.trim() !== '') {
-			console.log(`✅ Vertex AI Cached: Creating Bound Model for Cache: ${cachedContentName}`);
-
 			// Step 1: Create "Bound" Model
 			// This is the native LangChain way to attach parameters.
 			// It returns a "RunnableBinding" object.
 			// cachedContent is valid at runtime but not in type definitions, so we cast to any
-			const boundModel = model.bind({
-				cachedContent: cachedContentName,
-			} as any);
+			const boundModel = new RunnableBinding({
+				bound: model,
+				kwargs: {
+					cachedContent: cachedContentName,
+				},
+				config: {},
+			});
 
 			// Step 2: RESTORE 'bindTools'
 			// The "RunnableBinding" loses the 'bindTools' method, which n8n needs.
 			// We manually add it back.
+			
+			// Verify the original model has bindTools
+			if (typeof (model as any).bindTools !== 'function') {
+				console.error('❌ ERROR: Original model does not have bindTools method!');
+				throw new Error('ChatVertexAI model does not support tool binding');
+			}
+			
 			// @ts-ignore
 			boundModel.bindTools = function (tools: any, options?: any) {
-				console.log('🔧 Vertex AI Cached: Agent is binding tools...');
-
-				// Step A: Bind tools to the ORIGINAL model
-				// (The original model knows how to format tools for Gemini)
+				// Step A: Bind tools to the ORIGINAL model (not the bound one)
 				const modelWithTools = model.bindTools(tools, options);
-
+				
 				// Step B: Re-apply the Cache ID
 				// We wrap the result in another bind() to ensure cache stays attached
-				return modelWithTools.bind({
-					cachedContent: cachedContentName,
-				} as any);
+				const finalModel = new RunnableBinding({
+					bound: modelWithTools,
+					kwargs: {
+						cachedContent: cachedContentName,
+					},
+					config: {},
+				});
+				
+				return finalModel;
 			};
 
 			// Step 3: Restore other properties n8n might check
@@ -357,6 +347,14 @@ export class VertexAiCached implements INodeType {
 			boundModel.withStructuredOutput = model.withStructuredOutput
 				? model.withStructuredOutput.bind(model)
 				: undefined;
+			
+			// Copy additional properties that n8n might check
+			// @ts-ignore
+			boundModel._modelType = model._modelType;
+			// @ts-ignore
+			boundModel._llmType = model._llmType;
+			// @ts-ignore
+			boundModel.caller = model.caller;
 
 			return { response: boundModel };
 		}

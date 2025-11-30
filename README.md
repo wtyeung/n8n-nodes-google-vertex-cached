@@ -93,21 +93,33 @@ When n8n's AI Agent checks for tool support, it fails because the wrapper doesn'
 
 This node uses a **hybrid approach** that satisfies both LangChain's API and n8n's requirements:
 
-#### Step 1: Create the Cache Wrapper
+#### Step 1: Create the Cache Wrapper using RunnableBinding
+We use `RunnableBinding` directly instead of `.bind()` to avoid method existence issues and version compatibility problems.
+
 ```javascript
-const boundModel = model.bind({ cachedContent: cacheId });
+const boundModel = new RunnableBinding({
+  bound: model,
+  kwargs: { cachedContent: cacheId },
+  config: {}
+});
 ```
 ✅ Cache works  
 ❌ Tools broken
 
 #### Step 2: Restore `bindTools` Method
+We manually restore `bindTools` to ensure n8n's AI Agent can attach tools.
+
 ```javascript
 boundModel.bindTools = function(tools, options) {
   // Delegate tool formatting to the original model
   const modelWithTools = model.bindTools(tools, options);
   
   // Re-apply the cache to the tool-enabled model
-  return modelWithTools.bind({ cachedContent: cacheId });
+  return new RunnableBinding({
+    bound: modelWithTools,
+    kwargs: { cachedContent: cacheId },
+    config: {}
+  });
 };
 ```
 ✅ Cache works  
@@ -168,8 +180,9 @@ When the AI Agent runs, the request flows through multiple layers:
 
 - **Minimum n8n version**: 1.0.0
 - **Tested with**: n8n 1.x
-- **LangChain version**: ^0.1.0
-- **@langchain/google-vertexai**: ^0.0.18
+- **LangChain version**: ^1.1.1
+- **@langchain/google-vertexai**: ^1.0.4
+- **@langchain/core**: ^0.3.0
 
 ## Resources
 
