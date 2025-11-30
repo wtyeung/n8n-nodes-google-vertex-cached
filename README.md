@@ -272,7 +272,11 @@ To use **both** Context Caching and Dynamic Tools (like Calculator, Web Search, 
 
 ## Version History
 
-### 0.2.4 (Latest)
+### 0.2.6 (Latest)
+
+- **Developer Experience**: Enhanced the Tools + Cache conflict error. It now automatically converts your n8n tools into **Vertex AI Function Declaration JSON**, which you can directly copy and paste into your cache creation request to enable tools with cached content.
+
+### 0.2.4
 
 - **Developer Experience**: Added a helpful error message when attempting to use Tools + Cache. The error now includes the **JSON Tool Schema**, allowing users to copy it and use it for creating a cache with baked-in tools.
 - **Documentation**: Added the "Agent as a Tool" architecture guide to help users implement RAG + Dynamic Tools workflows.

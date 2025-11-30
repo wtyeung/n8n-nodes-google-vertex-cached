@@ -10,6 +10,7 @@ import {
 import { ChatVertexAI } from '@langchain/google-vertexai';
 import { ProjectsClient } from '@google-cloud/resource-manager';
 import { RunnableBinding } from '@langchain/core/runnables';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export class VertexAiCached implements INodeType {
 	usableAsTool = true;
@@ -345,19 +346,44 @@ export class VertexAiCached implements INodeType {
 				// Step A: Bind tools to the ORIGINAL model
 				const modelWithTools = model.bindTools(tools, options);
 				
-				// Check for Cache + Tools conflict
-				// If we have a cache AND tools are being bound, the Vertex AI API will reject the request.
-				// We intercept this here to provide a helpful error with the tool schema.
-				const toolKwargs = (modelWithTools as any).kwargs || {};
-				const toolsList = toolKwargs.tools || [];
+				// Inspect the 'tools' argument directly as it comes from n8n (fallback)
+				const toolsList = Array.isArray(tools) ? tools : [];
 				
 				if (toolsList.length > 0 && cachedContentName) {
-					const toolConfigJson = JSON.stringify(toolsList, null, 2);
+					let toolConfigJson = 'Could not serialize tools.';
+					try {
+						// Try to convert tools manually using Zod schema if available
+						// This matches Vertex AI FunctionDeclaration format
+						const manualConversion = toolsList.map((t: any) => {
+							let parameters = {};
+							if (t.schema) {
+								try {
+									parameters = zodToJsonSchema(t.schema);
+								} catch (zodError) {
+									console.warn('Error converting Zod schema:', zodError);
+								}
+							}
+							return {
+								name: t.name || t.constructor.name,
+								description: t.description || '',
+								parameters,
+							};
+						});
+
+						toolConfigJson = JSON.stringify(manualConversion, null, 2);
+						
+					} catch (e) {
+						console.error('Error serializing tools:', e);
+						// Fallback to simple names if conversion fails
+						const names = toolsList.map((t: any) => t.name || t.constructor.name).join(', ');
+						toolConfigJson = `(Serialization failed)\nTools: ${names}`;
+					}
+
 					throw new Error(
-						`❌ CONFLICT: You cannot use dynamic tools with an existing Context Cache.\n\n` +
-						`To use these tools, you must bake them into the cache at creation time.\n` +
-						`Here is the JSON configuration for your tools:\n\n${toolConfigJson}\n\n` +
-						`Use this JSON in the 'tools' field when creating your cached content.`
+						`❌ CONFLICT: Tools + Cache detected.\n\n` +
+						`You cannot use dynamic tools with an existing Context Cache.\n` +
+						`Use this JSON in the 'tools' field when creating your cache:\n\n` +
+						`${toolConfigJson}`
 					);
 				}
 				
