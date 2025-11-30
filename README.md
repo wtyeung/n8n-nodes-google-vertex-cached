@@ -148,18 +148,28 @@ const boundModel = new RunnableBinding({
 ❌ Tools broken
 
 #### Step 2: Restore `bindTools` Method
-We manually restore `bindTools` to ensure n8n's AI Agent can attach tools.
+We manually restore `bindTools` and use a **Flattened Binding** strategy to merge tool arguments with cache arguments. This prevents nesting issues that cause message propagation failures.
 
 ```javascript
 boundModel.bindTools = function(tools, options) {
-  // Delegate tool formatting to the original model
+  // 1. Delegate tool formatting to the original model
   const modelWithTools = model.bindTools(tools, options);
   
-  // Re-apply the cache to the tool-enabled model
+  // 2. Extract the underlying model and kwargs
+  const bound = modelWithTools.bound || modelWithTools;
+  const toolKwargs = modelWithTools.kwargs || {};
+  
+  // 3. Merge tool arguments with cache ID
+  const combinedKwargs = {
+    ...toolKwargs,
+    cachedContent: cacheId
+  };
+
+  // 4. Create a single, flat RunnableBinding
   return new RunnableBinding({
-    bound: modelWithTools,
-    kwargs: { cachedContent: cacheId },
-    config: {}
+    bound: bound,
+    kwargs: combinedKwargs,
+    config: modelWithTools.config || {}
   });
 };
 ```
@@ -221,9 +231,9 @@ When the AI Agent runs, the request flows through multiple layers:
 
 - **Minimum n8n version**: 1.0.0
 - **Tested with**: n8n 1.x
-- **LangChain version**: ^1.1.1
-- **@langchain/google-vertexai**: ^1.0.4
-- **@langchain/core**: ^0.3.0
+- **LangChain version**: ^0.3.0
+- **@langchain/google-vertexai**: ^0.2.18
+- **@langchain/core**: ^0.3.68
 
 ## Resources
 
