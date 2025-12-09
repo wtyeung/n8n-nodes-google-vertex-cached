@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-google-vertex-cached",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "n8n node for Google Vertex AI Chat with Context Caching and Google Search Grounding support",
   "license": "MIT",
   "homepage": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached",

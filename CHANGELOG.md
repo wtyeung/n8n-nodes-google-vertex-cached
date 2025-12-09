@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - 2024-12-09
+
+### Documentation
+- Updated npm package description to highlight both Context Caching and Google Search Grounding as key features
+- Added keywords: google-search, grounding, gemini
+- Updated README intro to emphasize both major features equally
+
 ## [0.2.8] - 2024-12-09
 
 ### Added
