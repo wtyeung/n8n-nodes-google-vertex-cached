@@ -153,6 +153,13 @@ export class VertexAiCached implements INodeType {
 						placeholder: 'Leave empty for auto',
 					},
 					{
+						displayName: 'Google Search Grounding',
+						name: 'useGoogleSearchGrounding',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to ground responses with Google Search results. When enabled, the model will search Google and use the results to provide more accurate, up-to-date information. Note: Cannot be used with cached content.',
+					},
+					{
 						displayName: 'Safety Settings',
 						name: 'safetySettings',
 						type: 'fixedCollection',
@@ -307,8 +314,6 @@ export class VertexAiCached implements INodeType {
 		};
 
 		// Add optional parameters if they exist
-
-		// Add optional parameters if they exist
 		if (options.thinkingBudget !== undefined) {
 			// @ts-ignore - New parameter might not be in types yet
 			baseConfig.thinkingBudget = options.thinkingBudget;
@@ -318,9 +323,29 @@ export class VertexAiCached implements INodeType {
 			baseConfig.safetySettings = options.safetySettings.values;
 		}
 
+		// Add Google Search grounding if enabled (only works without cache)
+		if (options.useGoogleSearchGrounding === true) {
+			if (cachedContentName && cachedContentName.trim() !== '') {
+				console.warn('⚠️ WARNING: Google Search grounding is enabled but will be ignored because cached content is being used. Tools cannot be used with cached content.');
+			} else {
+				console.log('🔍 Google Search Grounding ENABLED');
+				
+				// Based on Google AI Studio example, use googleSearch as a tool
+				// @ts-ignore - googleSearch may not be in types yet
+				baseConfig.tools = [{
+					googleSearch: {}
+				}];
+				
+				console.log('📝 Base config with grounding:', JSON.stringify(baseConfig.tools, null, 2));
+			}
+		}
+
 		// Instantiate the base model
 		const model = new ChatVertexAI(baseConfig);
 
+		// Store if grounding is enabled for later use
+		const hasGrounding = options.useGoogleSearchGrounding === true;
+		
 		// THE BIND FIX: Critical for n8n Agent compatibility
 		if (cachedContentName && cachedContentName.trim() !== '') {
 			// Step 1: Create "Bound" Model
@@ -359,6 +384,11 @@ export class VertexAiCached implements INodeType {
 			
 			// @ts-ignore
 			boundModel.bindTools = function (tools: any, options?: any) {
+				// If grounding is enabled, we need to preserve the googleSearch tool
+				if (hasGrounding) {
+					console.log('⚠️ WARNING: Cannot use both grounding and dynamic tools with cached content');
+				}
+				
 				// Step A: Bind tools to the ORIGINAL model
 				const modelWithTools = model.bindTools(tools, options);
 				
@@ -436,7 +466,27 @@ export class VertexAiCached implements INodeType {
 			return { response: boundModel };
 		}
 
-		// No cache - return the base model directly
+		// No cache - but if grounding is enabled, we need to preserve it when bindTools is called
+		if (hasGrounding) {
+			const originalBindTools = model.bindTools.bind(model);
+			// @ts-ignore
+			model.bindTools = function(tools: any, options?: any) {
+				console.log('🔧 Preserving googleSearch tool when binding n8n tools');
+				// Bind the n8n tools first
+				const modelWithTools = originalBindTools(tools, options);
+				// Then re-add the googleSearch tool
+				// @ts-ignore
+				const existingTools = (modelWithTools as any).kwargs?.tools || [];
+				const mergedTools = [...existingTools, { googleSearch: {} }];
+				// @ts-ignore
+				if ((modelWithTools as any).kwargs) {
+					(modelWithTools as any).kwargs.tools = mergedTools;
+				}
+				console.log('✅ Merged tools:', JSON.stringify(mergedTools, null, 2));
+				return modelWithTools;
+			};
+		}
+
 		return { response: model };
 	}
 }

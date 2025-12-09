@@ -65,6 +65,7 @@ This node provides a **Chat Model** that can be used as a sub-node in n8n's AI A
 
 - **Chat Completion**: Generate responses using Google's Gemini models
 - **Context Caching**: Reuse cached contexts to reduce API costs and improve response times
+- **Google Search Grounding**: Ground responses with real-time Google Search results for accurate, up-to-date information
 - **Tool Binding**: Full support for n8n AI Agent tool calling
 
 ## Credentials
@@ -105,11 +106,26 @@ This node uses n8n's built-in **Google Service Account** credential (`googleApi`
    - **Cached Content Name**: Paste the full resource name
    - **Temperature/TopK**: These are ignored when using cache (settings come from the cache itself)
 
+### Using Google Search Grounding
+
+Ground your model's responses with real-time Google Search results for more accurate, up-to-date information:
+
+1. In the node configuration, expand **Options**
+2. Enable **Google Search Grounding**
+
+**Use cases:**
+- Questions requiring current information (news, weather, stock prices)
+- Fact-checking and verification
+- Questions about recent events or developments
+
+**Important:** Google Search grounding cannot be used with cached content, as tools are not supported when using context caching.
+
 ### Important Notes
 
 - When using a cache, generation parameters (temperature, topK, topP, maxOutputTokens) are inherited from the cached content and cannot be overridden
 - The node automatically handles the "bind fix" to ensure compatibility with n8n's AI Agent tool calling
 - Cached content has an expiration time - check your cache status in GCP Console
+- Google Search grounding requires appropriate Vertex AI API permissions
 
 ## Technical Deep Dive: How Cache + Tools Work Together
 

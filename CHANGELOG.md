@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8] - 2024-12-09
+
+### Added
+- **Google Search Grounding**: Enable real-time Google Search grounding for more accurate, up-to-date responses
+  - Simple toggle in Options to enable/disable grounding
+  - Automatically merges with n8n AI Agent tools when not using cache
+  - Based on Google AI Studio's `googleSearch` tool implementation
+  - Use cases: current events, fact-checking, real-time information queries
+
+### Fixed
+- Properly preserve `googleSearch` tool when AI Agent binds dynamic tools
+- Added warning when attempting to use grounding with cached content (not supported)
+
+### Documentation
+- Added "Using Google Search Grounding" section to README
+- Clarified that grounding cannot be used with cached content
+- Updated Operations list to include grounding feature
+
 ## [0.2.7] - 2024-12-09
 
 ### Fixed
