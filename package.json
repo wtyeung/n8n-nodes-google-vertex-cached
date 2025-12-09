@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-google-vertex-cached",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "n8n node for Google Vertex AI Chat with Context Caching support",
   "license": "MIT",
   "homepage": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached",
@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
+    "@types/lodash": "^4.17.21",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
     "release-it": "^19.0.4",

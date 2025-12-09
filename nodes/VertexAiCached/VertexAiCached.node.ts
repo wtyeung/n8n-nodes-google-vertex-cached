@@ -11,6 +11,7 @@ import { ChatVertexAI } from '@langchain/google-vertexai';
 import { ProjectsClient } from '@google-cloud/resource-manager';
 import { RunnableBinding } from '@langchain/core/runnables';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { N8nLlmTracing } from './N8nLlmTracing';
 
 export class VertexAiCached implements INodeType {
 	usableAsTool = true;
@@ -302,6 +303,7 @@ export class VertexAiCached implements INodeType {
 			topP,
 			topK,
 			authOptions,
+			callbacks: [new N8nLlmTracing(this)],
 		};
 
 		// Add optional parameters if they exist
@@ -322,7 +324,7 @@ export class VertexAiCached implements INodeType {
 		// THE BIND FIX: Critical for n8n Agent compatibility
 		if (cachedContentName && cachedContentName.trim() !== '') {
 			// Step 1: Create "Bound" Model
-			// We use RunnableBinding because model.bind() is missing at runtime
+			// We use RunnableBinding to inject cachedContent parameter
 			const boundModel = new RunnableBinding({
 				bound: model,
 				kwargs: {
@@ -330,6 +332,20 @@ export class VertexAiCached implements INodeType {
 				},
 				config: {},
 			});
+			
+			// CRITICAL: Override withConfig to ensure callbacks are properly forwarded
+			// n8n attaches callbacks at runtime via withConfig, so we need to intercept this
+			const originalWithConfig = boundModel.withConfig.bind(boundModel);
+			// @ts-ignore
+			boundModel.withConfig = function(config: any) {
+				// Apply config to the underlying model, not just the wrapper
+				const configuredModel = originalWithConfig(config);
+				// Also apply to the bound model directly
+				if (config?.callbacks) {
+					(model as any).callbacks = config.callbacks;
+				}
+				return configuredModel;
+			};
 
 			// Step 2: RESTORE 'bindTools'
 			// The "RunnableBinding" loses the 'bindTools' method, which n8n needs.
@@ -412,6 +428,10 @@ export class VertexAiCached implements INodeType {
 			boundModel._llmType = model._llmType;
 			// @ts-ignore
 			boundModel.caller = model.caller;
+			// @ts-ignore
+			boundModel.verbose = model.verbose;
+			// @ts-ignore
+			boundModel.name = model.name;
 
 			return { response: boundModel };
 		}
