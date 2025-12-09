@@ -1,8 +1,11 @@
 # n8n-nodes-google-vertex-cached
 
-This is an n8n community node that provides **Google Vertex AI Chat with Context Caching** support for n8n workflows.
+This is an n8n community node that provides **Google Vertex AI Chat with Context Caching and Google Search Grounding** support for n8n workflows.
 
-Google Vertex AI is Google Cloud's unified AI platform that provides access to powerful language models like Gemini. This node implements native support for **Context Caching**, which allows you to cache large contexts (like documents, codebases, or conversation history) and reuse them across multiple API calls, significantly reducing costs and latency.
+Google Vertex AI is Google Cloud's unified AI platform that provides access to powerful language models like Gemini. This node implements native support for:
+
+- **Context Caching**: Cache large contexts (documents, codebases, conversation history) and reuse them across multiple API calls, significantly reducing costs and latency
+- **Google Search Grounding**: Ground model responses with real-time Google Search results for accurate, up-to-date information
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 

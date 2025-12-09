@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-google-vertex-cached",
   "version": "0.2.8",
-  "description": "n8n node for Google Vertex AI Chat with Context Caching support",
+  "description": "n8n node for Google Vertex AI Chat with Context Caching and Google Search Grounding support",
   "license": "MIT",
   "homepage": "https://github.com/wtyeung/n8n-nodes-google-vertex-cached",
   "keywords": [
@@ -11,7 +11,10 @@
     "google",
     "ai",
     "langchain",
-    "context-caching"
+    "context-caching",
+    "google-search",
+    "grounding",
+    "gemini"
   ],
   "author": {
     "name": "Tim Yeung",
