@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.10] - 2024-12-11
+
+### Fixed
+- **Token Usage Logging**: Fixed token consumption not appearing in n8n logs
+  - Added support for Google Vertex AI's snake_case `usage_metadata` format (`input_tokens`, `output_tokens`)
+  - Parser now checks multiple possible locations: `llmOutput.tokenUsage`, `llmOutput.usage_metadata`, `llmOutput.usageMetadata`, and `message.kwargs.usage_metadata`
+  - Token counts now properly display in the AI Agent interface logs with detailed breakdown including reasoning tokens
+  - **Cached Content Support**: Now captures and logs `cachedTokens` when using context caching
+    - Reads cached token count from `usage_metadata.input_token_details.cache_read`
+    - Cached tokens are logged to console: `💰 Token Usage - Prompt: X, Completion: Y, Cached: Z (90% discount)`
+    - Note: n8n's UI tooltip only shows Prompt/Completion tokens; cached tokens are available in console logs and workflow output data
+- **Google Search Grounding**: Clarified that Google Search grounding is automatically disabled when using cached content (Vertex AI API limitation)
+  - Added warning message when both features are enabled: "Google Search grounding is enabled but will be ignored because cached content is being used"
+
 ## [0.2.9] - 2024-12-09
 
 ### Documentation

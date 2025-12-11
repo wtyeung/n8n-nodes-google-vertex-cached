@@ -121,7 +121,23 @@ Ground your model's responses with real-time Google Search results for more accu
 - Fact-checking and verification
 - Questions about recent events or developments
 
-**Important:** Google Search grounding cannot be used with cached content, as tools are not supported when using context caching.
+**Important:** Google Search grounding cannot be used with cached content, as tools are not supported when using context caching. If both are enabled, grounding will be automatically disabled and a warning will be logged.
+
+### Token Usage Tracking
+
+This node provides comprehensive token usage tracking:
+
+**Standard Usage:**
+- **Prompt tokens**: Input tokens consumed
+- **Completion tokens**: Response tokens generated
+- **Total tokens**: Sum of prompt and completion
+
+**With Context Caching:**
+- **Cached tokens**: Tokens served from cache (90% discount)
+- Logged to console: `💰 Token Usage - Prompt: X, Completion: Y, Cached: Z (90% discount)`
+- Available in workflow output data under `tokenUsage.cachedTokens`
+
+**Note:** n8n's UI tooltip only displays Prompt and Completion tokens. To see cached token counts, check your console logs or access the data programmatically in subsequent nodes.
 
 ### Important Notes
 
